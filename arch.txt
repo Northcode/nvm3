@@ -1,0 +1,19 @@
+nvm3:
+CPU:
+  registers:
+    8 bit:
+      A, B, C, D
+    32 bit:
+      AX,BX,CX,DX
+    64 bit:
+      AXX,BXX,CXX,DXX
+    Pointer registers:
+      IP, SP, BP, HP, SI, DI
+    CMP Registers:
+      EQ, GT
+    Paging registers:
+      PE,MD
+  Caches:
+    Data cache,
+    Page directory,
+    Page table,
