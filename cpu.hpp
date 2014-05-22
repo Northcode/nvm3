@@ -2,6 +2,7 @@
 #include "heap.hpp"
 #include "bus.hpp"
 #include "pager.hpp"
+#include "instruction.hpp"
 
 class cpu : device
 {
@@ -22,4 +23,6 @@ public:
   void tick();
 
   void execute();
+
+  instruction nextInstruction();
 };

@@ -17,3 +17,9 @@ CPU:
     Data cache,
     Page directory,
     Page table,
+  nvm3 instruction (4 byte):
+    byte: opcode
+    4 bit: addressing mode
+    4 bit: flags
+    byte: register
+    int: data

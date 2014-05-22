@@ -20,3 +20,5 @@ public:
   void out(int index, byte data);
   void out(int index, maddr data);
 };
+
+bus BUS{};
