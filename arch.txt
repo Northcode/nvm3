@@ -23,3 +23,50 @@ CPU:
     4 bit: flags
     byte: register
     int: data
+
+Instructions:
+mov:
+  mov r, r
+  mov r, [a]
+  mov r, [r]
+  mov r, v
+  mov [r], r
+  mov [r], [r]
+  mov [a], r
+
+jump (uses addressing modes from mov):
+  jmp adr
+  je adr
+  jn adr
+  jlt adr
+  jle adr
+  jgt adr
+  jge adr
+  jz adr
+  jnz adr
+  jp adr
+  jnp adr
+
+cmp:
+  cmpb r, r
+  cmpdw r, r
+  cmpqw r, r
+
+math:
+  add r, r
+  sub r, r
+  mul r, r
+  div r, r
+  neg r
+  inc r
+  dec r
+
+interupts:
+  int i
+  swi i
+  rsi i
+
+bus io:
+  out p, r
+  out p, v
+  in  p, r

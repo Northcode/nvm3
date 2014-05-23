@@ -25,4 +25,16 @@ public:
   void execute();
 
   instruction nextInstruction();
+
+  void mov(instruction ins);
+
+  void jump(instruction ins);
+
+  void cmp(instruction ins);
+
+  void math(instruction ins);
+
+  void interupt(instruction ins);
+
+  void busio(instruction ins);
 };

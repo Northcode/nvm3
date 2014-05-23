@@ -12,10 +12,11 @@ constexpr int PAGE_SIZE = 4*1024;
 
 enum addr_mode
 {
-  direct,
-  reg_to_ram,
-  ram_tp_reg,
-  reg_to_reg,
-  data_to_reg,
-  
+  reg_reg,
+  reg_val,
+  reg_adr,
+  reg_aor,
+  aor_reg,
+  aor_aor,
+  adr_reg
 };
