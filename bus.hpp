@@ -4,11 +4,9 @@
 
 class bus
 {
-  vector<unique_ptr<device>> devices;
+  std::vector<std::unique_ptr<device>> devices{5};
 public:
-  bus();
-
-  int register_device(unique_ptr<device> device_ptr);
+  int register_device(device& device_ptr);
 
   void unregister_device(int index);
 

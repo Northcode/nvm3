@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include <vector>
+#include <memory>
 
 typedef unsigned char byte;
 typedef size_t maddr;
