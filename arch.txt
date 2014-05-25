@@ -24,6 +24,13 @@ CPU:
     byte: register
     int: data
 
+Interupts:
+0 - vm interupts:
+  A = 1: halt
+  A = 2: power
+  A = 3: reset
+
+
 Instructions:
 mov:
   mov r, r

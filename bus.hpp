@@ -6,7 +6,7 @@ class bus
 {
   std::vector<std::unique_ptr<device>> devices{5};
 public:
-  int register_device(device& device_ptr);
+  int register_device(device& dev);
 
   void unregister_device(int index);
 
@@ -19,4 +19,31 @@ public:
   void out(int index, maddr data);
 };
 
-bus BUS{};
+int bus::register_device(device& dev) {
+  devices.push_back(std::unique_ptr<device>(dev));
+  return devices.size() - 1;
+}
+
+void bus::unregister_device(int index) {
+  devices.erase(devices.begin() + index);
+}
+
+bool bus::bus_width(int index) {
+  return devices[index].bus_width();
+}
+
+byte bus::inb(int index) {
+  return devices[index].sendByte();
+}
+
+int bus::indw(int index) {
+  return devices[index].sendInt();
+}
+
+void bus::out(int index, byte data) {
+  devices[index].recieve(data);
+}
+
+void bus::out(int index, int data) {
+  devices[index].recieve(data);
+}

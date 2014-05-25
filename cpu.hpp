@@ -4,7 +4,7 @@
 #include "pager.hpp"
 #include "instruction.hpp"
 
-class cpu : device
+class cpu : public device
 {
 public:
   //registers
@@ -23,6 +23,8 @@ public:
   void tick();
 
   void execute();
+
+  void reset();
 
   instruction nextInstruction();
 
