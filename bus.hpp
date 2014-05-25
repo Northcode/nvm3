@@ -4,9 +4,9 @@
 
 class bus
 {
-  std::vector<std::unique_ptr<device>> devices{5};
+  std::vector<std::shared_ptr<device>> devices{5};
 public:
-  int register_device(device& dev);
+  int register_device(std::shared_ptr<device> dev);
 
   void unregister_device(int index);
 
@@ -19,8 +19,8 @@ public:
   void out(int index, maddr data);
 };
 
-int bus::register_device(device& dev) {
-  devices.push_back(std::unique_ptr<device>(dev));
+int bus::register_device(std::shared_ptr<device> dev) {
+  devices.push_back(dev);
   return devices.size() - 1;
 }
 
@@ -29,21 +29,21 @@ void bus::unregister_device(int index) {
 }
 
 bool bus::bus_width(int index) {
-  return devices[index].bus_width();
+  return devices[index]->bus_width();
 }
 
 byte bus::inb(int index) {
-  return devices[index].sendByte();
+  return devices[index]->send_byte();
 }
 
-int bus::indw(int index) {
-  return devices[index].sendInt();
+maddr bus::indw(int index) {
+  return devices[index]->send_int();
 }
 
 void bus::out(int index, byte data) {
-  devices[index].recieve(data);
+  devices[index]->recieve(data);
 }
 
-void bus::out(int index, int data) {
-  devices[index].recieve(data);
+void bus::out(int index, maddr data) {
+  devices[index]->recieve(data);
 }

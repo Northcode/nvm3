@@ -24,12 +24,23 @@ CPU:
     byte: register
     int: data
 
-Interupts:
+Interupts (hardware interupts):
 0 - vm interupts:
   A = 1: halt
   A = 2: power
   A = 3: reset
 
+Software interupts:
+0 - div_by_zero_error
+1 - debug_breakpoint
+2 - invalid_opcode
+3 - gp_fault
+4 - page_fault
+5 - stack_overflow
+6 - double_fault
+7 - triple_fault
+
+8 - new hardware detected
 
 Instructions:
 mov:

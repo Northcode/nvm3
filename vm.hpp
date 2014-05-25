@@ -8,7 +8,7 @@ class vm
 {
   bus data_bus{};
 
-  std::unique_ptr<cpu> _cpu;
+  std::shared_ptr<cpu> _cpu;
 
 public:
   vm();
@@ -17,18 +17,17 @@ public:
 
   void reset();
 
-  void insert_media(media_device& media);
+  void insert_media(std::shared_ptr<media_device> media);
 
-  void add_device(device& dev);
+  void add_device(std::shared_ptr<device> dev);
 };
 
 vm::vm() {
-  cpu __cpu{};
-  _cpu = std::unique_ptr<cpu>(__cpu);
-  data_bus.register_device(__cpu);
+  _cpu = std::shared_ptr<cpu>(new cpu());
+  data_bus.register_device(_cpu);
 }
 
-void vm::add_device(device& dev) {
+void vm::add_device(std::shared_ptr<device> dev) {
   data_bus.register_device(dev);
 }
 
@@ -42,11 +41,7 @@ void vm::reset() {
   _cpu->execute();
 }
 
-void vm::insert_media(media_device& device) {
-  data_bus.register_device(device);
-  _cpu->recieve(5);
-}
-
-void vm::add_device(device& dev) {
-  data_bus.register_device(device);
+void vm::insert_media(std::shared_ptr<media_device> dev) {
+  data_bus.register_device(dev);
+  _cpu->exec_interupt(8);
 }

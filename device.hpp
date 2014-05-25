@@ -5,9 +5,9 @@ class device
 {
 public:
   virtual void recieve(byte data);
-  virtual void recieve(int data);
-  virtual byte sendbyte();
-  virtual void sendint();
+  virtual void recieve(maddr data);
+  virtual byte send_byte();
+  virtual maddr send_int();
 
   virtual bool bus_width();
 };
