@@ -19,6 +19,8 @@ public:
   void out(int index, maddr data);
 };
 
+bus data_bus{};
+
 int bus::register_device(std::shared_ptr<device> dev) {
   devices.push_back(dev);
   return devices.size() - 1;

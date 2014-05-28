@@ -6,10 +6,6 @@
 
 class vm
 {
-  bus data_bus{};
-
-  std::shared_ptr<cpu> _cpu;
-
 public:
   vm();
 
@@ -23,8 +19,8 @@ public:
 };
 
 vm::vm() {
-  _cpu = std::shared_ptr<cpu>(new cpu());
-  data_bus.register_device(_cpu);
+  data_bus.register_device(std::shared_ptr<device>(&cpu1));
+  data_bus.register_device(std::shared_ptr<device>(&memory));
 }
 
 void vm::add_device(std::shared_ptr<device> dev) {
@@ -32,16 +28,16 @@ void vm::add_device(std::shared_ptr<device> dev) {
 }
 
 void vm::power() {
-  _cpu->execute();
+  cpu1.execute();
 }
 
 void vm::reset() {
-  _cpu->halt();
-  _cpu->reset();
-  _cpu->execute();
+  cpu1.halt();
+  cpu1.reset();
+  cpu1.execute();
 }
 
 void vm::insert_media(std::shared_ptr<media_device> dev) {
   data_bus.register_device(dev);
-  _cpu->exec_interupt(8);
+  cpu1.exec_interupt(8);
 }

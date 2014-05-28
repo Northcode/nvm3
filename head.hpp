@@ -4,12 +4,12 @@
 #include <memory>
 
 typedef unsigned char byte;
-typedef size_t maddr;
+typedef std::size_t maddr;
 
-constexpr int RAM_SIZE = 4*4*1024;
-constexpr int PAGE_DIRECTORY_SIZE = 1024;
-constexpr int PAGE_TABLE_SIZE = 1024;
-constexpr int PAGE_SIZE = 4*1024;
+constexpr std::size_t RAM_SIZE = 4*4*1024;
+constexpr std::size_t PAGE_DIRECTORY_SIZE = 1024;
+constexpr std::size_t PAGE_TABLE_SIZE = 1024;
+constexpr std::size_t PAGE_SIZE = 4*1024;
 
 enum addr_mode
 {

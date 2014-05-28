@@ -1,5 +1,6 @@
 #pragma once
 #include "head.hpp"
+#include "ram.hpp"
 #include "bus.hpp"
 #include "pager.hpp"
 #include "instruction.hpp"
@@ -30,9 +31,11 @@ public:
 
   void halt();
 
-  instruction nextInstruction();
+  instruction next_instruction();
 
   void exec_interupt(int i);
+
+  void force_trap(int trap);
 
   void mov(instruction ins);
 
@@ -56,11 +59,13 @@ public:
   bool bus_width();
 };
 
+cpu cpu1{};
+
 void cpu::tick() {
   if(HLT) {
     exec_interupt(0);
   }
-  instruction i = nextInstruction();
+  instruction i = next_instruction();
   if(i.opcode == 0) {
     mov(i);
   } else if (i.opcode == 1) {
@@ -85,8 +90,22 @@ void cpu::execute() {
   }
 }
 
+void cpu::reset() {
+
+}
+
 void cpu::halt() {
   HLT = true;
+}
+
+instruction cpu::next_instruction() {
+  byte opcode       = memory.read(IP);
+  byte reg          = memory.read(IP + 1);
+  byte addr_mode_b  = memory.read(IP + 2);
+  byte flags        = memory.read(IP + 3);
+  int data          = memory.read_int(IP + 4);
+  instruction ins{opcode,reg,static_cast<addr_mode>(addr_mode_b),flags,data};
+  return ins;
 }
 
 void cpu::recieve(maddr data) {

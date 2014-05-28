@@ -1,5 +1,6 @@
 #pragma once
 #include "head.hpp"
+#include "ram.hpp"
 
 enum page_mode
 {
