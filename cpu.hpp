@@ -549,6 +549,13 @@ void cpu::jump(instruction ins) {
   { if(GT){ jmp(ins); } }
   else if(ins.flags == 6)
   { if(EQ && GT){ jmp(ins); } }
+  else if(ins.flags == 7) {
+    push(IP);
+    jmp(ins);
+  } else if(ins.flags == 8) {
+    maddr retaddr = pop_dw();
+    IP = retaddr;
+  }
 }
 
 void cpu::ccmp(instruction ins) {
