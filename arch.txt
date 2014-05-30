@@ -86,5 +86,11 @@ interupts:
 
 bus io:
   out p, r
-  out p, v
   in  p, r
+
+stack:
+  push r
+  pusbb v
+  pushi v
+  popb r
+  popi r

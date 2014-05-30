@@ -4,10 +4,12 @@
 class device
 {
 public:
-  virtual void recieve(byte data);
-  virtual void recieve(maddr data);
-  virtual byte send_byte();
-  virtual maddr send_int();
+  device() {}
 
-  virtual bool bus_width();
+  virtual void recieve(byte data) {}
+  virtual void recieve(maddr data) {}
+  virtual byte send_byte() { return 0; }
+  virtual maddr send_int() { return 0; }
+
+  virtual bool bus_width() { return false; }
 };
