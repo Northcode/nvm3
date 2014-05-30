@@ -1,5 +1,5 @@
 #include <ctime>
-#include "vm.hpp"
+#include "virtual-machine/vm.hpp"
 
 using namespace std;
 
