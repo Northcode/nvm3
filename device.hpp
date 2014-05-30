@@ -4,7 +4,11 @@
 class device
 {
 public:
-  device() {}
+  device() { if (DEBUG_OUT)
+    std::cout << "const device " << this << std::endl; }
+
+  virtual ~device() { if (DEBUG_OUT)
+    std::cout << "dest device " << this << std::endl; }
 
   virtual void recieve(byte data) {}
   virtual void recieve(maddr data) {}

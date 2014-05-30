@@ -6,10 +6,14 @@
 typedef unsigned char byte;
 typedef std::size_t maddr;
 
-constexpr std::size_t RAM_SIZE = 4*4*1024;
-constexpr std::size_t PAGE_DIRECTORY_SIZE = 1024;
-constexpr std::size_t PAGE_TABLE_SIZE = 1024;
-constexpr std::size_t PAGE_SIZE = 4*1024;
+#include "opcodes.hpp"
+
+constexpr bool DEBUG_OUT{false};
+
+constexpr std::size_t RAM_SIZE{4*4*1024};
+constexpr std::size_t PAGE_DIRECTORY_SIZE{1024};
+constexpr std::size_t PAGE_TABLE_SIZE{1024};
+constexpr std::size_t PAGE_SIZE{4*1024};
 
 enum addr_mode
 {
@@ -21,3 +25,8 @@ enum addr_mode
   aor_aor,
   adr_reg
 };
+
+void gotoxy(int x,int y)
+{
+  printf("%c[%d;%df",0x1B,y,x);
+}

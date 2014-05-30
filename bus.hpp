@@ -4,11 +4,16 @@
 
 class bus
 {
-  std::vector<std::shared_ptr<device>> devices{5};
+  std::vector<std::shared_ptr<device>> devices;
 public:
+  bus();
+  ~bus();
+
   int register_device(std::shared_ptr<device> dev);
 
   void unregister_device(int index);
+
+  void free_devices();
 
   bool bus_width(int index);
 
@@ -19,7 +24,22 @@ public:
   void out(int index, maddr data);
 };
 
-bus data_bus{};
+bus::bus() {
+  devices = std::vector<std::shared_ptr<device>>(5);
+  if (DEBUG_OUT)
+    std::cout << "const bus " << this << std::endl;
+}
+
+bus::~bus() {
+  if (DEBUG_OUT)
+    std::cout << "dest bus " << this << std::endl;
+}
+
+void bus::free_devices() {
+  for (auto p : devices)
+    p.reset();
+  devices.clear();
+}
 
 int bus::register_device(std::shared_ptr<device> dev) {
   devices.push_back(dev);
@@ -27,6 +47,7 @@ int bus::register_device(std::shared_ptr<device> dev) {
 }
 
 void bus::unregister_device(int index) {
+  devices[index].reset();
   devices.erase(devices.begin() + index);
 }
 

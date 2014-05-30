@@ -9,6 +9,12 @@
 class cpu : public device
 {
 public:
+  std::shared_ptr<ram> memory;
+  std::shared_ptr<bus> data_bus;
+
+  cpu();
+  ~cpu();
+
   //registers
   byte A{0},B{0},C{0},D{0};
   int AX{0},BX{0},CX{0},DX{0};
@@ -92,6 +98,8 @@ public:
 
   void stackop(instruction ins);
 
+  void pwr(instruction ins);
+
   //device implementation
   void recieve(maddr data);
 
@@ -100,7 +108,15 @@ public:
   bool bus_width();
 };
 
-cpu cpu1{};
+cpu::cpu() {
+  if(DEBUG_OUT)
+    std::cout << "const cpu " << this << std::endl;
+}
+
+cpu::~cpu() {
+  if(DEBUG_OUT)
+    std::cout << "dest cpu " << this << std::endl;
+}
 
 int cpu::get_register_size(int reg) {
   if (reg < 4)
@@ -316,61 +332,73 @@ long cpu::get_register_l(int reg){
 }
 
 void cpu::write(maddr address, byte data){
-  if(PG.can_write(address))
-    memory.write(address,data);
-  else {
-    FAULT_ADDR = address;
-    force_trap(PAGE_FAULT);
-  }
+  if(PE)
+    if(PG.can_write(address))
+      memory->write(address,data);
+    else {
+      FAULT_ADDR = address;
+      force_trap(PAGE_FAULT);
+    }
+  else
+    memory->write(address,data);
 }
 
 void cpu::write(maddr address, maddr data){
-  if(PG.can_write(address))
-    memory.write(address,data);
-  else {
-    FAULT_ADDR = address;
-    force_trap(PAGE_FAULT);
-  }
+  if(PE)
+    if(PG.can_write(address))
+      memory->write(address,data);
+    else {
+      FAULT_ADDR = address;
+      force_trap(PAGE_FAULT);
+    }
+  else
+    memory->write(address,data);
 }
 
 byte cpu::read(maddr address){
-  if(PG.can_read(address))
-    return memory.read(address);
-  else {
-    FAULT_ADDR = address;
-    force_trap(PAGE_FAULT);
-  }
+  if(PE)
+    if(PG.can_read(address))
+      return memory->read(address);
+    else {
+      FAULT_ADDR = address;
+      force_trap(PAGE_FAULT);
+    }
+  else
+    return memory->read(address);
   return 0;
 }
 
 maddr cpu::read_int(maddr address) {
-  if(PG.can_read(address))
-    return memory.read_int(address);
-  else {
-    FAULT_ADDR = address;
-    force_trap(PAGE_FAULT);
-  }
+  if(PE)
+    if(PG.can_read(address))
+      return memory->read_int(address);
+    else {
+      FAULT_ADDR = address;
+      force_trap(PAGE_FAULT);
+    }
+  else
+    return memory->read_int(address);
   return 0;
 }
 
 void cpu::push(byte data) {
-  memory.write(SP,data);
+  memory->write(SP,data);
   SP++;
 }
 
 void cpu::push(maddr data) {
-  memory.write(SP,data);
+  memory->write(SP,data);
   SP += 4;
 }
 
 byte cpu::pop() {
   SP--;
-  return memory.read(SP);
+  return memory->read(SP);
 }
 
 maddr cpu::pop_dw() {
   SP -= 4;
-  return memory.read_int(SP);
+  return memory->read_int(SP);
 }
 
 void cpu::tick() {
@@ -384,18 +412,24 @@ void cpu::tick() {
     return;
   }
 
-  if(i.opcode == 0) {
+  if(i.opcode == MOV) {
     mov(i);
-  } else if (i.opcode == 1) {
+  } else if (i.opcode == JMP) {
     jump(i);
-  } else if (i.opcode == 2) {
+  } else if (i.opcode == CMP) {
     cmp(i);
-  } else if (i.opcode == 3) {
+  } else if (i.opcode == MTH) {
     math(i);
-  } else if (i.opcode == 4) {
+  } else if (i.opcode == INT) {
     interupt(i);
-  } else if (i.opcode == 5) {
+  } else if (i.opcode == BIO) {
     busio(i);
+  } else if (i.opcode == STK) {
+    stackop(i);
+  } else if (i.opcode == PWR) {
+    pwr(i);
+  } else {
+    std::cout << "nop" << std::endl;
   }
   IP += 8;
 }
@@ -418,16 +452,16 @@ void cpu::halt() {
 
 instruction cpu::next_instruction() {
   byte opcode       = read(IP);
-  byte reg          = memory.read(IP + 1);
-  byte addr_mode_b  = memory.read(IP + 2);
-  byte flags        = memory.read(IP + 3);
-  int data          = memory.read_int(IP + 4);
+  byte reg          = memory->read(IP + 1);
+  byte addr_mode_b  = memory->read(IP + 2);
+  byte flags        = memory->read(IP + 3);
+  int data          = memory->read_int(IP + 4);
   instruction ins{opcode,reg,static_cast<addr_mode>(addr_mode_b),flags,data};
   return ins;
 }
 
 void cpu::exec_interupt(int i) {
-  maddr address = memory.read_int(IVT + i * 4);
+  maddr address = memory->read_int(IVT + i * 4);
   if(address == 0) {
     force_trap(DOUBLE_FAULT);
   }
@@ -447,6 +481,11 @@ void cpu::ret_interupt() {
 }
 
 void cpu::force_trap(int trap) {
+  if(trap == GP_FAULT)
+    std::cout << "ERROR: GP_FAULT" << std::endl;
+  else if (trap == DOUBLE_FAULT)
+    std::cout << "DOUBLE FAULT" << std::endl;
+
   if(FAULT)
     exec_interupt(TRIPLE_FAULT);
   if(TRAP) {
@@ -752,16 +791,16 @@ void cpu::busio(instruction ins) {
     int reg_size{get_register_size(ins.reg)};
 
     if(reg_size == 8)
-      data_bus.out(ins.data, get_register_b(ins.reg));
+      data_bus->out(ins.data, get_register_b(ins.reg));
     else if(reg_size == 32)
-      data_bus.out(ins.data, (maddr)get_register_i(ins.reg));
+      data_bus->out(ins.data, (maddr)get_register_i(ins.reg));
   } else if (ins.flags == 1) {
     int reg_size{get_register_size(ins.reg)};
 
     if(reg_size == 8)
-      set_register(ins.reg, data_bus.inb(ins.data));
+      set_register(ins.reg, data_bus->inb(ins.data));
     else if (reg_size == 32)
-      set_register(ins.reg, (int)data_bus.indw(ins.data));
+      set_register(ins.reg, (int)data_bus->indw(ins.data));
   }
 }
 
@@ -785,6 +824,13 @@ void cpu::stackop(instruction ins) {
     else if (reg_size == 32)
       set_register(ins.reg, (int)pop_dw());
   }
+}
+
+void cpu::pwr(instruction ins) {
+  if(ins.flags == 0)
+    halt();
+  else if(ins.flags == 1)
+    RN = false;
 }
 
 void cpu::recieve(maddr data) {

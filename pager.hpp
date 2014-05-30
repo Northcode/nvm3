@@ -27,12 +27,30 @@ struct pageTable
   std::vector<page> pages{PAGE_TABLE_SIZE};
 
   std::vector<page>::iterator get_page(int index);
+
+  void alloc_page(ram& memory);
 };
+
+std::vector<page>::iterator pageTable::get_page(int index) {
+  return pages.begin() + index;
+}
+
+void pageTable::alloc_page(ram& memory) {
+  auto frame = memory.find_frame();
+  for(int i = 0; i < pages.size(); i++)
+    if(!pages[i].present) {
+      pages[i].address = frame->address;
+      break;
+    }
+  frame->is_free = false;
+}
 
 class pager
 {
   std::vector<pageTable> cache{PAGE_DIRECTORY_SIZE};
 public:
+  std::shared_ptr<ram> memory;
+
   int PT{0};
 
   std::vector<pageTable>::iterator get_page_table(int index);
