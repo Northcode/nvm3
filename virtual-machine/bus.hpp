@@ -25,7 +25,7 @@ public:
 };
 
 bus::bus() {
-  devices = std::vector<std::shared_ptr<device>>(5);
+  devices = std::vector<std::shared_ptr<device>>(0);
   if (DEBUG_OUT)
     std::cout << "const bus " << this << std::endl;
 }
@@ -68,5 +68,15 @@ void bus::out(int index, byte data) {
 }
 
 void bus::out(int index, maddr data) {
+  if(DEBUG_OUT)
+    std::cout << "writing to device " << index << " data: " << data << std::endl;
+
+  if(devices.size() <= index) {
+    if(DEBUG_OUT)
+      std::cout << "ERROR: device does not exist! device list length " << devices.size() << std::endl;
+    return;
+  } else
+    if(DEBUG_OUT)
+      std::cout << "device should exist device list length " << devices.size() << std::endl;
   devices[index]->recieve(data);
 }

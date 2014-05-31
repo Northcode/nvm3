@@ -5,6 +5,7 @@
 class mapped_device : public device
 {
 public:
+  bool present{false};
   maddr address{0};
   size_t size{0};
 

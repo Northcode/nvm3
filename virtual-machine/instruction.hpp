@@ -27,6 +27,8 @@ struct instruction
   }
 
   void write(std::shared_ptr<ram> outs, maddr address) {
+    if(DEBUG_OUT)
+      std::cout << "writing instruction " << (char)(opcode + 48) << " to " << address << std::endl;
     outs->write(address,     opcode);
     outs->write(address + 1, reg);
     outs->write(address + 2, (byte)addressing_mode);

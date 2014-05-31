@@ -789,11 +789,13 @@ void cpu::interupt(instruction ins) {
 void cpu::busio(instruction ins) {
   if(ins.flags == 0) {
     int reg_size{get_register_size(ins.reg)};
+    if(DEBUG_OUT)
+      std::cout << "bus io register " << (int)ins.reg << " size: " << reg_size << " port " << ins.data << std::endl;
 
     if(reg_size == 8)
-      data_bus->out(ins.data, get_register_b(ins.reg));
+      {data_bus->out(ins.data, (byte)get_register_b(ins.reg));}
     else if(reg_size == 32)
-      data_bus->out(ins.data, (maddr)get_register_i(ins.reg));
+      {data_bus->out(ins.data, (maddr)get_register_i(ins.reg));}
   } else if (ins.flags == 1) {
     int reg_size{get_register_size(ins.reg)};
 

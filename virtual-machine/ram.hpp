@@ -57,34 +57,54 @@ ram::~ram() {
 
 byte ram::read(maddr address) {
   //std::cout << "reading byte at: " << address << std::endl;
+  if(address > data.size())
+    return 0;
   for (auto& d : mapped_devices) {
-    if(d->address <= address && d->address + d->size >= address)
+    if(d->address <= address && d->address + d->size >= address && d->present) {
+      if(DEBUG_OUT)
+        std::cout << "reading " << data[address] << " from device at address " << d->address << " with size " << d->size << std::endl;
       d->on_read(address,data[address]);
+    }
   }
   return data[address];
 }
 
 int ram::read_int(maddr address) {
+  if(address + 3 > data.size())
+    return 0;
   int res = (data[address + 3] << 24 | data[address + 2] << 16 | data[address + 1] << 8 | data[address]);
   for (auto& d : mapped_devices) {
-    if(d->address <= address && d->address + d->size >= address)
+    if(d->address <= address && d->address + d->size >= address && d->present){
+      if(DEBUG_OUT)
+        std::cout << "reading " << res << " from device at address " << d->address << " with size " << d->size << std::endl;
       d->on_read_dw(address,res);
+    }
   }
   return res;
 }
 
 void ram::write(maddr address, byte data) {
+  if(address > this->data.size())
+    return;
   for (auto& d : mapped_devices) {
-    if(d->address <= address && d->address + d->size >= address)
-      d->on_read(address,data);
+    if(d->address <= address && d->address + d->size >= address && d->present){
+      if(DEBUG_OUT)
+        std::cout << "writing " << data << " to device at address " << d->address << " with size " << d->size << std::endl;
+      d->on_write(address,data);
+    }
   }
   this->data[address] = data;
 }
 
 void ram::write(maddr address, maddr data) {
+  if(address + 3 > this->data.size())
+    return;
   for (auto& d : mapped_devices) {
-    if(d->address <= address && d->address + d->size >= address)
+    if(d->address <= address && d->address + d->size >= address && d->present){
+      if(DEBUG_OUT)
+        std::cout << "writing " << data << " to device at address " << d->address << " with size " << d->size << std::endl;
       d->on_write_dw(address,data);
+    }
   }
   this->data[address] = data >> 24 & 0xff;
   this->data[address] = data >> 16 & 0xff;

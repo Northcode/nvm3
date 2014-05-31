@@ -12,6 +12,7 @@ public:
   ~text_device();
 
   void redraw();
+  void setpos(int,int);
 
   void on_write(maddr, byte);
 
@@ -33,28 +34,46 @@ text_device::~text_device() {
     std::cout << "dest text dev " << this << std::endl;
 }
 
+void text_device::setpos(int x, int y) {
+  if(DEBUG_OUT)
+    std::cout << "setting position x: " << x << ", y: " << y << std::endl;
+  gotoxy(x,y);
+}
+
 void text_device::redraw() {
-  gotoxy(0,0);
+  setpos(0,0);
   for(int i = 0; i < this->size; i++) {
     if(i % 80 == 0)
-      gotoxy(0,i/80);
-    std::cout << (char)memory->read(this->address + i);
+      std::cout << std::endl;
+    std::cout << (int)memory->read(this->address + i);
   }
+  if(DEBUG_OUT)
+    std::cout << "redrawing screen" << std::endl;
 }
 
 void text_device::on_write(maddr i, byte data) {
-  gotoxy(i % 80, i / 80);
+  maddr reladr = i - address;
+  if(DEBUG_OUT)
+    std::cout << "data " << (int)data << " written to address " << i << std::endl;
+  setpos(reladr % 80, reladr / 80);
   std::cout << (char)data;
 }
 
 void text_device::recieve(byte data) {
+  if(DEBUG_OUT)
+    std::cout << "TXTSCRN Recieved byte " << data << std::endl;
   if(data == 0) {
     redraw();
+  } else {
+    std::cout << (char)data;
   }
 }
 
 void text_device::recieve(maddr data) {
+  present = true;
   address = data;
+  if(DEBUG_OUT)
+    std::cout << "TEXT_SCREEN address mapped to: " << address << std::endl;
 }
 
 byte text_device::send_byte() {

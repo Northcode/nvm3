@@ -4,11 +4,11 @@
 #include <memory>
 
 typedef unsigned char byte;
-typedef std::size_t maddr;
+typedef unsigned int maddr;
 
 #include "opcodes.hpp"
 
-constexpr bool DEBUG_OUT{false};
+bool DEBUG_OUT{false};
 
 constexpr std::size_t RAM_SIZE{4*4*1024};
 constexpr std::size_t PAGE_DIRECTORY_SIZE{1024};

@@ -37,6 +37,7 @@ vm::vm() {
   data_bus->register_device(memory);
   auto textdev = std::shared_ptr<text_device>(new text_device());
   data_bus->register_device(textdev);
+  memory->map_device(textdev);
 }
 
 
