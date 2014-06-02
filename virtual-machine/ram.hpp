@@ -56,13 +56,13 @@ ram::~ram() {
 }
 
 byte ram::read(maddr address) {
-  //std::cout << "reading byte at: " << address << std::endl;
+  //std::cout << "reading byte at: " << address << " ram size: " << data.size() << std::endl;
   if(address > data.size())
     return 0;
   for (auto& d : mapped_devices) {
     if(d->address <= address && d->address + d->size >= address && d->present) {
-      if(DEBUG_OUT)
-        std::cout << "reading " << data[address] << " from device at address " << d->address << " with size " << d->size << std::endl;
+      //if(DEBUG_OUT)
+        //std::cout << "reading " << data[address] << " from device at address " << d->address << " with size " << d->size << std::endl;
       d->on_read(address,data[address]);
     }
   }

@@ -28,5 +28,6 @@ enum addr_mode
 
 void gotoxy(int x,int y)
 {
-  printf("%c[%d;%df",0x1B,y,x);
+  if(!DEBUG_OUT)
+    printf("%c[%d;%df",0x1B,y,x);
 }

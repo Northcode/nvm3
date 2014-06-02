@@ -16,4 +16,6 @@ public:
   virtual maddr send_int() { return 0; }
 
   virtual bool bus_width() { return false; }
+
+  virtual void update() {}
 };

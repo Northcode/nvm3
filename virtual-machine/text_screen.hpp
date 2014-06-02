@@ -45,7 +45,7 @@ void text_device::redraw() {
   for(int i = 0; i < this->size; i++) {
     if(i % 80 == 0)
       std::cout << std::endl;
-    std::cout << (int)memory->read(this->address + i);
+    std::cout << memory->read(this->address + i);
   }
   if(DEBUG_OUT)
     std::cout << "redrawing screen" << std::endl;
@@ -55,7 +55,7 @@ void text_device::on_write(maddr i, byte data) {
   maddr reladr = i - address;
   if(DEBUG_OUT)
     std::cout << "data " << (int)data << " written to address " << i << std::endl;
-  setpos(reladr % 80, reladr / 80);
+  setpos(reladr % 80 + 1, reladr / 80);
   std::cout << (char)data;
 }
 

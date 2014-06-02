@@ -432,6 +432,8 @@ void cpu::tick() {
     std::cout << "nop" << std::endl;
   }
   IP += 8;
+
+  data_bus->update_all();
 }
 
 void cpu::execute() {

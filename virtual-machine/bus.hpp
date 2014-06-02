@@ -17,6 +17,8 @@ public:
 
   bool bus_width(int index);
 
+  void update_all();
+
   byte inb(int index);
   maddr indw(int index);
 
@@ -39,6 +41,11 @@ void bus::free_devices() {
   for (auto p : devices)
     p.reset();
   devices.clear();
+}
+
+void bus::update_all() {
+  for(auto p : devices)
+    p->update();
 }
 
 int bus::register_device(std::shared_ptr<device> dev) {
