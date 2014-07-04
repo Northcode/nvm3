@@ -1,6 +1,8 @@
 #pragma once
-#include <string>
 #include "../virtual-machine/head.hpp"
+#include <string>
+#include <sstream>
+#include <fstream>
 
 constexpr byte T_INT{1};
 constexpr byte T_STRING{2};
@@ -32,7 +34,28 @@ struct token_c : public token
 class assembler
 {
 public:
+  std::ifstream input_file;
   std::vector<std::unique_ptr<token>> tokens;
 
+  assembler(std::string);
 
+  void scan();
+
+  void scan_char(char);
 };
+
+assembler::assembler(std::string filename) {
+  input_file.open(filename, std::ifstream::in);
+  tokens = std::vector<std::unique_ptr<token>>();
+}
+
+void assembler::scan() {
+  while(input_file.good())
+    scan_char(input_file.get());
+}
+
+void assembler::scan_char(char c) {
+  if(c == '"') {
+
+  }
+}

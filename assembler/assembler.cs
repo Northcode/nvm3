@@ -98,13 +98,13 @@ namespace ncasm
 
 	public enum Addressing_mode : byte
 	{
-		reg_reg = 0,
-		reg_val,
-		reg_adr,
-		reg_aor,
-		aor_reg,
-		aor_aor,
-		adr_reg
+		reg_reg = 0, //mov reg, reg
+		reg_val,		 //mov reg, val
+		reg_adr,		 //mov reg, [adr]
+		reg_aor,		 //mov reg, [reg]
+		aor_reg,		 //mov [reg], reg
+		aor_aor,		 //mov [reg], [reg]
+		adr_reg		  //mov [adr], reg
 	}
 
 	public struct Instruction
@@ -240,34 +240,35 @@ namespace ncasm
 						// --- parse Lvalue in mov
 						if(Check(Token.WORD)) {
 							Register reg = Register.NULL;
-							if(Register.TryParse(tokens[i].value as string, out reg)) {
+							if(Register.TryParse(tokens[i].value as string, out reg)) { //mov reg, ?
 								CurrentInstruction.register = reg;
 								CurrentInstruction.addressing_mode = Addressing_mode.reg_reg;
 							} else {
 								throw new ParseException("Token is not a register, cannot move", i, this);
 							}
-						} else if (Check('[')) {
+						} else if (Check('[')) { //mov [?], ?
 								Next();
 								Expect(Token.WORD);
 								if(tokens[i].type == Token.WORD) {
 									Register reg = Register.NULL;
-									if(Register.TryParse(tokens[i].value as string, out reg)) {
+									if(Register.TryParse(tokens[i].value as string, out reg)) { //mov [reg], ?
 										CurrentInstruction.register = reg;
 										CurrentInstruction.addressing_mode = Addressing_mode.aor_reg;
-									} else {
+									} else { //mov [adr], reg
 										//assume this is a label
+										CurrentInstruction.addressing_mode = Addressing_mode.adr_reg;
 										calls.Add(new Tuple<int,string>(i,CurrentToken.value as string));
 									}
 									Next();
-								} else if (tokens[i].type == Token.INT_LIT) {
+								} else if (tokens[i].type == Token.INT_LIT) { //mov [adr], reg
 									CurrentInstruction.data = (int)tokens[i].value;
 									CurrentInstruction.addressing_mode = Addressing_mode.adr_reg;
 									Next();
-								} else if (tokens[i].type == Token.UINT_LIT) {
+								} else if (tokens[i].type == Token.UINT_LIT) { //mov [adr], reg
 									CurrentInstruction.data = (int)(uint)tokens[i].value;
 									CurrentInstruction.addressing_mode = Addressing_mode.adr_reg;
 									Next();
-								} else if (tokens[i].type == Token.BYTE_LIT) {
+								} else if (tokens[i].type == Token.BYTE_LIT) { //mov [adr], reg
 									CurrentInstruction.data = (int)(byte)tokens[i].value;
 									CurrentInstruction.addressing_mode = Addressing_mode.adr_reg;
 									Next();
@@ -282,7 +283,7 @@ namespace ncasm
 
 							// --- parse Rvalue in mov
 
-							if(Check(Token.BYTE_LIT)) {
+							if(Check(Token.BYTE_LIT)) { //mov ?, val
 								Assert(!(CurrentInstruction.addressing_mode == Addressing_mode.reg_val || CurrentInstruction.addressing_mode == Addressing_mode.aor_reg),
 								"Cannot move byte to anything other than a register or address of a register");
 
@@ -310,7 +311,25 @@ namespace ncasm
 
 
 								} else {
-									throw new ParseException("Token is not a register, cannot move", i, this);
+									//assume this is a label
+									Assert(CurrentInstruction.addressing_mode == Addressing_mode.reg_reg || CurrentInstruction.addressing_mode == Addressing_mode.reg_val || CurrentInstruction.addressing_mode == Addressing_mode.aor_reg,
+									"Cannot move address to anything other than register or address of register");
+
+									CurrentInstruction.addressing_mode = Addressing_mode.reg_val;
+									calls.Add(new Tuple<int,string>(i,CurrentToken.value as string));
+								}
+							} else if (Check('[')) {
+								Next();
+								if(Check(Token.WORD)) {
+									Register reg = Register.NULL;
+									if(Register.TryParse(tokens[i].value as string, out reg)) {
+										if(CurrentInstruction.addressing_mode == Addressing_mode.reg_reg) {
+											CurrentInstruction.data = (int)reg;
+										}
+										CurrentInstruction.addressing_mode = Addressing_mode.reg_aor;
+									} else {
+
+									}
 								}
 							}
 						}

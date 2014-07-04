@@ -2,6 +2,7 @@
 #include "head.hpp"
 #include "ram.hpp"
 #include "mapped_device.hpp"
+#include "screen.hpp"
 
 class text_device : public mapped_device
 {

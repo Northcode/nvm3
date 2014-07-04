@@ -1,6 +1,6 @@
 #include <ctime>
 #include "virtual-machine/vm.hpp"
-//#include "assembler/assembler.hpp"
+#include "assembler/assembler.hpp"
 
 using namespace std;
 
