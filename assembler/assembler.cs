@@ -17,9 +17,16 @@ namespace ncasm
 
 			Console.WriteLine("Is this little endian? " + BitConverter.IsLittleEndian);
 
-			byte[] data = ins.toBytes();
-			foreach(byte b in data)
-				Console.Write(b + " - ");
+			Console.Write("Input: "); string code = Console.ReadLine();
+
+			Assembler a = new Assembler(code);
+			a.Scan();
+			foreach(Token t in a.tokens)
+				Console.WriteLine(t.ToString());
+			a.Assemble();
+
+			foreach(Instruction i in a.instructions)
+				Console.WriteLine(i.ToString());
 		}
 	}
 
@@ -107,12 +114,24 @@ namespace ncasm
 		adr_reg		  //mov [adr], reg
 	}
 
+	public enum valtype
+	{
+		reg,
+		val,
+		aor,
+		adr
+	}
+
 	public struct Instruction
 	{
 		public string label;
 
 		public OpCode opcode;
 		public Register register;
+
+		public valtype LvalType;
+		public valtype RvalType;
+
 		public Addressing_mode addressing_mode;
 		public byte flags;
 		public int data;
@@ -130,6 +149,18 @@ namespace ncasm
 			result[7] = datab[3];
 
 			return result;
+		}
+
+		public override string ToString() {
+			StringBuilder result = new StringBuilder("instruction: {");
+			if(label != null) result.Append("label: " + label + ",");
+			result.Append("opcode: " + opcode.ToString() + ",");
+			result.Append("register: " + register.ToString() + ",");
+			result.Append("LvalType: " + LvalType.ToString() + ",");
+			result.Append("RvalType: " + RvalType.ToString() + ",");
+			result.Append("flags: " + flags.ToString() + ",");
+			result.Append("data: " + data + "}");
+			return result.ToString();
 		}
 	}
 
@@ -154,6 +185,39 @@ namespace ncasm
 
 		public object value;
 		public byte type;
+
+		public string TypeString
+		{
+			get
+			{
+				switch (type) {
+					case 0:
+					return "WORD";
+					case 1:
+					return "BYTE_LIT";
+					case 2:
+					return "INT_LIT";
+					case 3:
+					return "uINT_LIT";
+					case 4:
+					return "FLOAT_LIT";
+					case 5:
+					return "STRING_LIT";
+					case 6:
+					return "SYMBOL";
+					case 7:
+					return "BOOL_LIT";
+					case 8:
+					return "CHAR_LIT";
+					default:
+					return "unknown";
+				}
+			}
+		}
+
+		public override string ToString() {
+			return "token: {type:" + TypeString + ",value:" + value.ToString() + "}";
+		}
 	}
 
 	public static class Extentions
@@ -167,13 +231,13 @@ namespace ncasm
 	{
 		string code;
 		public List<Token> tokens = new List<Token>();
-		List<Instruction> instructions = new List<Instruction>();
+		public List<Instruction> instructions = new List<Instruction>();
 		List<DefinedBytes> definedbytes = new List<DefinedBytes>();
 		List<Tuple<int,string>> calls = new List<Tuple<int,string>>();
 	  byte[] program;
 	  int i = 0;
 
-		Instruction CurrentInstruction;
+		internal Instruction CurrentInstruction;
 
 		public Assembler (string Code) {
 			code = Code;
@@ -198,7 +262,7 @@ namespace ncasm
 
 		public bool Expect(char c) {
 			if(Check(c)) return true;
-			throw new ParseException("Unexpected symbol, expected '{0}'".f(c), i, this);
+			throw new ParseException("Unexpected symbol, expected '{0}', got:{1}".f(c,tokens[i].value), i, this);
 		}
 
 		public bool Expect(byte TokenType) {
@@ -215,7 +279,7 @@ namespace ncasm
 		}
 
 		public bool Check(char c) {
-			return Check(Token.CHAR_LIT) && (char)CurrentToken.value == c;
+			return (Check(Token.CHAR_LIT) || Check(Token.SYMBOL)) && (char)CurrentToken.value == c;
 		}
 
 		public bool Check(byte TokenType) {
@@ -226,136 +290,159 @@ namespace ncasm
 			return Check(Token.WORD) && CurrentToken.value as string == val;
 		}
 
+		public bool EOF
+		{
+			get {
+				return i >= code.Length;
+			}
+		}
+
     public byte[] GetProgram() {
         return program.ToArray();
     }
 
 		public void Assemble() {
-        for(i = 0; i < tokens.Count; i++) {
-					CurrentInstruction = new Instruction();
-					if(Check("mov")) {
-						CurrentInstruction.opcode = OpCode.MOV;
-						Next();
+      for(i = 0; i < tokens.Count; i++) {
+				CurrentInstruction = new Instruction();
+				Console.WriteLine(CurrentToken.value as string);
+				if(Check("mov")) {
+					CurrentInstruction.opcode = OpCode.MOV;
+					Next();
 
-						// --- parse Lvalue in mov
-						if(Check(Token.WORD)) {
-							Register reg = Register.NULL;
-							if(Register.TryParse(tokens[i].value as string, out reg)) { //mov reg, ?
-								CurrentInstruction.register = reg;
-								CurrentInstruction.addressing_mode = Addressing_mode.reg_reg;
-							} else {
-								throw new ParseException("Token is not a register, cannot move", i, this);
-							}
-						} else if (Check('[')) { //mov [?], ?
-								Next();
-								Expect(Token.WORD);
-								if(tokens[i].type == Token.WORD) {
-									Register reg = Register.NULL;
-									if(Register.TryParse(tokens[i].value as string, out reg)) { //mov [reg], ?
-										CurrentInstruction.register = reg;
-										CurrentInstruction.addressing_mode = Addressing_mode.aor_reg;
-									} else { //mov [adr], reg
-										//assume this is a label
-										CurrentInstruction.addressing_mode = Addressing_mode.adr_reg;
-										calls.Add(new Tuple<int,string>(i,CurrentToken.value as string));
-									}
-									Next();
-								} else if (tokens[i].type == Token.INT_LIT) { //mov [adr], reg
-									CurrentInstruction.data = (int)tokens[i].value;
-									CurrentInstruction.addressing_mode = Addressing_mode.adr_reg;
-									Next();
-								} else if (tokens[i].type == Token.UINT_LIT) { //mov [adr], reg
-									CurrentInstruction.data = (int)(uint)tokens[i].value;
-									CurrentInstruction.addressing_mode = Addressing_mode.adr_reg;
-									Next();
-								} else if (tokens[i].type == Token.BYTE_LIT) { //mov [adr], reg
-									CurrentInstruction.data = (int)(byte)tokens[i].value;
-									CurrentInstruction.addressing_mode = Addressing_mode.adr_reg;
-									Next();
-								}
-								Expect(']');
-							} else {
-								throw new ParseException("Invalid token for Lvalue in mov",i,this);
-							}
-							Next();
+					// --- parse Lvalue in mov
+					ParseLval();
+					Next();
 
-							Expect(',');
+					Expect(',');
+					Next();
 
-							// --- parse Rvalue in mov
-
-							if(Check(Token.BYTE_LIT)) { //mov ?, val
-								Assert(!(CurrentInstruction.addressing_mode == Addressing_mode.reg_val || CurrentInstruction.addressing_mode == Addressing_mode.aor_reg),
-								"Cannot move byte to anything other than a register or address of a register");
-
-								CurrentInstruction.data = (int)(byte)CurrentToken.value;
-								CurrentInstruction.addressing_mode = Addressing_mode.reg_val;
-							} else if (Check(Token.INT_LIT)) {
-								Assert(!(CurrentInstruction.addressing_mode == Addressing_mode.reg_val || CurrentInstruction.addressing_mode == Addressing_mode.aor_reg),
-								"Cannot move int to anything other than a register or address of a register");
-
-								CurrentInstruction.data = (int)CurrentToken.value;
-								CurrentInstruction.addressing_mode = Addressing_mode.reg_val;
-							} else if (Check(Token.UINT_LIT)) {
-								Assert(!(CurrentInstruction.addressing_mode == Addressing_mode.reg_val || CurrentInstruction.addressing_mode == Addressing_mode.aor_reg),
-								"Cannot move int to anything other than a register or address of a register");
-
-								CurrentInstruction.data = (int)(uint)CurrentToken.value;
-								CurrentInstruction.addressing_mode = Addressing_mode.reg_val;
-							} else if (Check(Token.WORD)) {
-								Register reg = Register.NULL;
-								if(Register.TryParse(tokens[i].value as string, out reg)) {
-									if(CurrentInstruction.addressing_mode == Addressing_mode.reg_reg) {
-									CurrentInstruction.data = (int)reg;
-									}
-									CurrentInstruction.addressing_mode = Addressing_mode.reg_reg;
-
-
-								} else {
-									//assume this is a label
-									Assert(CurrentInstruction.addressing_mode == Addressing_mode.reg_reg || CurrentInstruction.addressing_mode == Addressing_mode.reg_val || CurrentInstruction.addressing_mode == Addressing_mode.aor_reg,
-									"Cannot move address to anything other than register or address of register");
-
-									CurrentInstruction.addressing_mode = Addressing_mode.reg_val;
-									calls.Add(new Tuple<int,string>(i,CurrentToken.value as string));
-								}
-							} else if (Check('[')) {
-								Next();
-								if(Check(Token.WORD)) {
-									Register reg = Register.NULL;
-									if(Register.TryParse(tokens[i].value as string, out reg)) {
-										if(CurrentInstruction.addressing_mode == Addressing_mode.reg_reg) {
-											CurrentInstruction.data = (int)reg;
-										}
-										CurrentInstruction.addressing_mode = Addressing_mode.reg_aor;
-									} else {
-
-									}
-								}
-							}
-						}
-					}
-        InsertCalls();
+					ParseRval();
+				}
+				instructions.Add(CurrentInstruction);
+			}
+      InsertCalls();
 		}
 
     public void InsertCalls() {
     }
 
+		public void ParseLval()
+		{
+			if(Check(Token.WORD)) {
+				Register reg = Register.NULL;
+				if(Register.TryParse(tokens[i].value as string, out reg)) { //mov reg, ?
+					CurrentInstruction.register = reg;
+					CurrentInstruction.LvalType = valtype.reg;
+				} else {
+					throw new ParseException("Token is not a register, cannot move", i, this);
+				}
+			} else if (Check('[')) { //mov [?], ?
+					Next();
+					Expect(Token.WORD);
+					if(tokens[i].type == Token.WORD) {
+						Register reg = Register.NULL;
+						if(Register.TryParse(tokens[i].value as string, out reg)) { //mov [reg], ?
+							CurrentInstruction.register = reg;
+							CurrentInstruction.LvalType = valtype.aor;
+						} else { //mov [adr], reg
+							//assume this is a label
+
+							CurrentInstruction.LvalType = valtype.adr;
+							calls.Add(new Tuple<int,string>(i,CurrentToken.value as string));
+						}
+						Next();
+					} else if (tokens[i].type == Token.INT_LIT) { //mov [adr], reg
+						CurrentInstruction.data = (int)tokens[i].value;
+						CurrentInstruction.LvalType = valtype.adr;
+						Next();
+					} else if (tokens[i].type == Token.UINT_LIT) { //mov [adr], reg
+						CurrentInstruction.data = (int)(uint)tokens[i].value;
+						CurrentInstruction.LvalType = valtype.adr;
+						Next();
+					} else if (tokens[i].type == Token.BYTE_LIT) { //mov [adr], reg
+						CurrentInstruction.data = (int)(byte)tokens[i].value;
+						CurrentInstruction.LvalType = valtype.adr;
+						Next();
+					}
+					Expect(']');
+				} else {
+					throw new ParseException("Invalid token for Lvalue in mov",i,this);
+				}
+		}
+
+		public void ParseRval()
+		{
+			if(Check(Token.BYTE_LIT)) { //mov ?, val
+				Assert((CurrentInstruction.LvalType == valtype.reg || CurrentInstruction.LvalType == valtype.aor),
+				"Cannot move byte to anything other than a register or address of a register");
+
+				CurrentInstruction.data = (int)(byte)CurrentToken.value;
+				CurrentInstruction.RvalType = valtype.val;
+			} else if (Check(Token.INT_LIT)) {
+				Assert((CurrentInstruction.LvalType == valtype.reg || CurrentInstruction.LvalType == valtype.aor),
+				"Cannot move int to anything other than a register or address of a register");
+
+				CurrentInstruction.data = (int)CurrentToken.value;
+				CurrentInstruction.RvalType = valtype.val;
+			} else if (Check(Token.UINT_LIT)) {
+				Assert((CurrentInstruction.LvalType == valtype.reg || CurrentInstruction.LvalType == valtype.aor),
+				"Cannot move uint to anything other than a register or address of a register");
+
+				CurrentInstruction.data = (int)(uint)CurrentToken.value;
+				CurrentInstruction.RvalType = valtype.val;
+			} else if (Check(Token.WORD)) {
+				Register reg = Register.NULL;
+				if(Register.TryParse(tokens[i].value as string, out reg)) {
+					if(CurrentInstruction.LvalType == valtype.reg) {
+						CurrentInstruction.data = (int)reg;
+						CurrentInstruction.RvalType = valtype.reg;
+					}
+				} else {
+					//assume this is a label
+					Assert(CurrentInstruction.addressing_mode == Addressing_mode.reg_reg || CurrentInstruction.addressing_mode == Addressing_mode.reg_val || CurrentInstruction.addressing_mode == Addressing_mode.aor_reg,
+					"Cannot move address to anything other than register or address of register");
+
+					CurrentInstruction.RvalType = valtype.val;
+					calls.Add(new Tuple<int,string>(i,CurrentToken.value as string));
+				}
+			} else if (Check('[')) {
+				Next();
+				if(Check(Token.WORD)) {
+					Register reg = Register.NULL;
+					if(Register.TryParse(tokens[i].value as string, out reg)) {
+						if(CurrentInstruction.addressing_mode == Addressing_mode.reg_reg) {
+							CurrentInstruction.data = (int)reg;
+						}
+						CurrentInstruction.addressing_mode = Addressing_mode.reg_aor;
+					} else {
+						//assume label
+						CurrentInstruction.RvalType = valtype.val;
+						calls.Add(new Tuple<int,string>(i,CurrentToken.value as string));
+					}
+				}
+				Next();
+				Expect(']');
+			} else {
+				throw new ParseException("WHAT!?",i,this);
+			}
+		}
+
 		public void Scan()
 		{
 			tokens = new List<Token>();
-			int i = 0;
-			while (i < code.Length)
+			i = 0;
+			while (!EOF)
 			{
 				if (char.IsDigit(code[i]))
 				{
 					StringBuilder strb = new StringBuilder();
-					while (char.IsDigit(code[i]))
+					while (!EOF && char.IsDigit(code[i]))
 					{
 							strb.Append(code[i]);
 							i++;
 					}
-					i--;
-					if (code[i + 1] == '.')
+					if(!EOF) {
+					if (code[i] == '.')
 					{
 							strb.Append('.');
 							i++;
@@ -367,8 +454,9 @@ namespace ncasm
 							i--;
 							float f = (float)Convert.ToDecimal(strb.ToString());
 							tokens.Add(new Token() { type = Token.FLOAT_LIT, value = f });
+							continue;
 					}
-					else if (code[i + 1] == 'x')
+					else if (code[i] == 'x')
 					{
 							i += 2;
 							strb.Clear();
@@ -377,13 +465,13 @@ namespace ncasm
 							strb.Append(code[i]);
 							byte b = byte.Parse(strb.ToString(), System.Globalization.NumberStyles.HexNumber);
 							tokens.Add(new Token() { type = Token.BYTE_LIT, value = b });
+							continue;
 					}
-					else
-					{
-							string str = strb.ToString();
-							int n = Convert.ToInt32(str);
-							tokens.Add(new Token() { type = Token.INT_LIT, value = n });
 					}
+					string str = strb.ToString();
+					int n = Convert.ToInt32(str);
+					tokens.Add(new Token() { type = Token.INT_LIT, value = n });
+					continue;
 				}
 				else if (code[i] == '#') {
 					while(code[i] != '\n') {
@@ -482,7 +570,7 @@ namespace ncasm
 		int tokenid;
 		Assembler assembler;
 
-		public ParseException(string message, int tokenid, Assembler asm) : base(message) {
+		public ParseException(string message, int tokenid, Assembler asm) : base(message + ";; TOKEN TRACE:{0} ;; CURRENT INSTRUCTION: {1}".f(asm.tokens[tokenid].ToString(),asm.CurrentInstruction.ToString())) {
 			this.assembler = asm;
 			this.tokenid = tokenid;
 		}
