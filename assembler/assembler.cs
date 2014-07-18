@@ -412,8 +412,8 @@ namespace ncasm
 					if(Register.TryParse(tokens[i].value as string, out reg)) {
 						if(CurrentInstruction.addressing_mode == Addressing_mode.reg_reg) {
 							CurrentInstruction.data = (int)reg;
+							CurrentInstruction.RvalType = valtype.aor;
 						}
-						CurrentInstruction.addressing_mode = Addressing_mode.reg_aor;
 					} else {
 						//assume label
 						CurrentInstruction.RvalType = valtype.val;
