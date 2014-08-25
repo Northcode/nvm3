@@ -1,0 +1,4 @@
+{
+  "cmd": "g++",
+  "args": [ "-o", "nvm", "main.cpp","--std=c++11","-g", "-LX11","-Lglut","-LGL"]
+}
