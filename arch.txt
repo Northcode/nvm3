@@ -1,0 +1,96 @@
+nvm3:
+CPU:
+  registers:
+    8 bit:
+      A, B, C, D
+    32 bit:
+      AX,BX,CX,DX
+    64 bit:
+      AXX,BXX,CXX,DXX
+    Pointer registers:
+      IP, SP, BP, HP, SI, DI
+    CMP Registers:
+      EQ, GT
+    Paging registers:
+      PE,MD
+  Caches:
+    Data cache,
+    Page directory,
+    Page table,
+  nvm3 instruction (4 byte):
+    byte: opcode
+    4 bit: addressing mode
+    4 bit: flags
+    byte: register
+    int: data
+
+Interupts (hardware interupts):
+0 - vm interupts:
+  A = 1: halt
+  A = 2: power
+  A = 3: reset
+
+Software interupts:
+0 - div_by_zero_error
+1 - debug_breakpoint
+2 - invalid_opcode
+3 - gp_fault
+4 - page_fault
+5 - stack_overflow
+6 - double_fault
+7 - triple_fault
+
+8 - new hardware detected
+
+Instructions:
+mov:
+  mov r, r
+  mov r, [a]
+  mov r, [r]
+  mov r, v
+  mov [r], r
+  mov [r], [r]
+  mov [a], r
+
+jump (uses addressing modes from mov):
+  jmp adr
+  je adr
+  jn adr
+  jlt adr
+  jle adr
+  jgt adr
+  jge adr
+  jz adr
+  jnz adr
+  jp adr
+  jnp adr
+
+cmp:
+  cmpb r, r
+  cmpdw r, r
+  cmpqw r, r
+
+math:
+  add r, r
+  sub r, r
+  mul r, r
+  div r, r
+  neg r
+  inc r
+  dec r
+
+interupts:
+  int i
+  swi i
+  rsi i
+
+bus io:
+  out p, r
+  in  p, r
+
+stack:
+  push r
+  pusbb v
+  pushi v
+  popb r
+  popi r
