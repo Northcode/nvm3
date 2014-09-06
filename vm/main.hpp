@@ -16,8 +16,8 @@ constexpr int FRAME_SIZE = 4*1024;
 typedef unsigned char byte;
 typedef unsigned int dword;
 
-constexpr dword SCREEN_WIDTH = 800;
-constexpr dword SCREEN_HEIGHT = 600;
+constexpr dword SCREEN_WIDTH = 480;
+constexpr dword SCREEN_HEIGHT = 240;
 
 //predefine for device pointer
 class vm;

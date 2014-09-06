@@ -30,6 +30,7 @@ struct VGA_port : public port_c
 
   void send(byte b) {
     dev->vram[dev->pos] = b;
+    dev->redraw();
   }
 
   void send(dword dw) {

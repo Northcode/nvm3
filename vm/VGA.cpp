@@ -12,7 +12,7 @@ void VGA_dev::power() {
   std::shared_ptr<VGA_port> vgap = std::make_shared<VGA_port>(this);
   machine->_databridge->register_port(3,vgap);
   glutInitDisplayMode(GLUT_SINGLE);
-  glutInitWindowSize(300, 300);
+  glutInitWindowSize(SCREEN_WIDTH, SCREEN_HEIGHT);
   glutInitWindowPosition(100, 100);
   glutCreateWindow("Hello world :D");
 }
